@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Tokenize API Client</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        select {
+            cursor: pointer;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        
+        .result h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .token-output {
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            font-family: 'Courier New', monospace;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        
+        .token {
+            display: inline-block;
+            margin: 2px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            position: relative;
+        }
+        
+        .token-id {
+            font-size: 0.7em;
+            position: absolute;
+            top: -8px;
+            left: 2px;
+            color: #666;
+            font-weight: bold;
+        }
+        
+        .api-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .api-info h4 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Color Tokenize API Client</h1>
+        
+        <div class="api-info">
+            <h4>API Status</h4>
+            <div id="apiStatus">Connecting to API...</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="textInput">Text to Tokenize:</label>
+            <textarea id="textInput" placeholder="Enter text to tokenize...">Hello, 世界! How are you today?</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="modeSelect">Tokenization Mode:</label>
+            <select id="modeSelect">
+                <option value="">Loading modes...</option>
+            </select>
+        </div>
+        
+        <button id="tokenizeBtn" onclick="tokenizeText()" disabled>Tokenize Text</button>
+        
+        <div class="loading" id="loading">Processing...</div>
+        <div class="error" id="error"></div>
+        
+        <div class="result" id="result" style="display: none;">
+            <h3>Tokenized Result:</h3>
+            <div class="token-output" id="tokenOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://142.171.67.239:5000';
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAPIStatus();
+            loadModes();
+        });
+        
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('apiStatus').innerHTML = `
+                        <strong style="color: green;">✓ Connected</strong><br>
+                        API: ${data.name} v${data.version}
+                    `;
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = `
+                    <strong style="color: red;">✗ Connection Error</strong><br>
+                    Make sure the API server is running at ${API_BASE}
+                `;
+            }
+        }
+        
+        async function loadModes() {
+            try {
+                const response = await fetch(`${API_BASE}/api/modes`);
+                const data = await response.json();
+                
+                const modeSelect = document.getElementById('modeSelect');
+                modeSelect.innerHTML = '';
+                
+                data.modes.forEach(mode => {
+                    const option = document.createElement('option');
+                    option.value = mode;
+                    option.textContent = mode;
+                    modeSelect.appendChild(option);
+                });
+                
+                if (data.modes.length > 0) {
+                    document.getElementById('tokenizeBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                showError('Failed to load tokenization modes');
+            }
+        }
+        
+        async function tokenizeText() {
+            const text = document.getElementById('textInput').value.trim();
+            const mode = document.getElementById('modeSelect').value;
+            
+            if (!text) {
+                showError('Please enter some text to tokenize');
+                return;
+            }
+            
+            if (!mode) {
+                showError('Please select a tokenization mode');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('tokenizeBtn').disabled = true;
+            
+            try {
+                const params = new URLSearchParams({
+                    text: text,
+                    mode: mode
+                });
+                
+                const response = await fetch(`${API_BASE}/api/tokenized?${params}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Tokenization failed');
+                }
+                
+                // Display the result
+                document.getElementById('tokenOutput').innerHTML = data.html;
+                document.getElementById('result').style.display = 'block';
+                
+            } catch (error) {
+                showError(error.message || 'Failed to tokenize text');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('tokenizeBtn').disabled = false;
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        // Allow Enter key to tokenize (Ctrl+Enter in textarea)
+        document.getElementById('textInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                tokenizeText();
+            }
+        });
+    </script>
+</body>
+</html>
