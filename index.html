@@ -172,6 +172,9 @@
         
         <div class="result" id="result" style="display: none;">
             <h3>Tokenized Result:</h3>
+            <div style="margin-bottom: 10px; font-weight: bold; color: #333;">
+                Token Count: <span id="tokenCount" style="color: #007bff;">0</span>
+            </div>
             <div class="token-output" id="tokenOutput"></div>
         </div>
     </div>
@@ -264,6 +267,7 @@
                 
                 // Display the result
                 document.getElementById('tokenOutput').innerHTML = data.html;
+                document.getElementById('tokenCount').textContent = data.token_count;
                 document.getElementById('result').style.display = 'block';
                 
             } catch (error) {

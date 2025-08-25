@@ -35,9 +35,10 @@ def load_tokenizer_by_mode(mode_name: str) -> Tokenizer:
     tokenizers_cache[mode_name] = tokenizer
     return tokenizer
 
-def text_to_tokens_with_mode(text: str, mode_name: str) -> str:
+def text_to_tokens_with_mode(text: str, mode_name: str) -> tuple[str, int]:
     """
     Convert text to colored HTML tokens using specified mode
+    Returns tuple of (html_output, token_count)
     """
     tokenizer = load_tokenizer_by_mode(mode_name)
     vocab_size = tokenizer.get_vocab_size()
@@ -65,7 +66,7 @@ def text_to_tokens_with_mode(text: str, mode_name: str) -> str:
         )
         html_parts.append(span_tag)
     
-    return "".join(html_parts)
+    return "".join(html_parts), len(tokens)
 
 @app.route('/api/modes', methods=['GET'])
 def get_modes():
@@ -104,12 +105,13 @@ def get_tokenized():
                 "error": f"Invalid mode: {mode}. Available modes: {available_modes}"
             }), 400
         
-        html_output = text_to_tokens_with_mode(text, mode)
+        html_output, token_count = text_to_tokens_with_mode(text, mode)
         
         return jsonify({
             "text": text,
             "mode": mode,
-            "html": html_output
+            "html": html_output,
+            "token_count": token_count
         })
         
     except Exception as e:
