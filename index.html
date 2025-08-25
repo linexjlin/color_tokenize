@@ -156,6 +156,9 @@
         <div class="form-group">
             <label for="textInput">Text to Tokenize:</label>
             <textarea id="textInput" placeholder="Enter text to tokenize...">Hello, 世界! How are you today?</textarea>
+            <div style="margin-top: 5px; font-size: 14px; color: #666;">
+                Bytes: <span id="byteCount">0</span>
+            </div>
         </div>
         
         <div class="form-group">
@@ -186,6 +189,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             checkAPIStatus();
             loadModes();
+            updateByteCount();
         });
         
         async function checkAPIStatus() {
@@ -283,6 +287,15 @@
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
         }
+        
+        function updateByteCount() {
+            const text = document.getElementById('textInput').value;
+            const byteLength = new TextEncoder().encode(text).length;
+            document.getElementById('byteCount').textContent = byteLength.toLocaleString();
+        }
+        
+        // Real-time byte count updates
+        document.getElementById('textInput').addEventListener('input', updateByteCount);
         
         // Allow Enter key to tokenize (Ctrl+Enter in textarea)
         document.getElementById('textInput').addEventListener('keydown', function(e) {
