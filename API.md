@@ -36,11 +36,24 @@ curl http://localhost:5000/api/modes
 
 ### 2. Get Colored Tokenized HTML
 
-Converts text into colored HTML tokens using a specified tokenization mode.
+Converts text into colored HTML tokens using a specified tokenization mode. Now supports POST requests for long text input.
 
 #### Request
 ```http
-GET /api/tokenized?text={text}&mode={mode}
+POST /api/tokenized
+```
+
+#### Headers
+```http
+Content-Type: application/json
+```
+
+#### Request Body
+```json
+{
+  "text": "Hello 世界!",
+  "mode": "Qwen3"
+}
 ```
 
 #### Parameters
@@ -54,7 +67,8 @@ GET /api/tokenized?text={text}&mode={mode}
 {
   "text": "Hello 世界!",
   "mode": "Qwen3",
-  "html": "<span class=\"token\" style=\"background-color: #f5f5f5;\"><sup class=\"token-id\">1</sup>Hello</span><span class=\"token\" style=\"background-color: #e8f5e8;\"><sup class=\"token-id\">234</sup> 世界</span><span class=\"token\" style=\"background-color: #fff5f5;\"><sup class=\"token-id\">5</sup>!</span>"
+  "html": "<span class=\"token\" style=\"background-color: #f5f5f5;\"><sup class=\"token-id\">1</sup>Hello</span><span class=\"token\" style=\"background-color: #e8f5e8;\"><sup class=\"token-id\">234</sup> 世界</span><span class=\"token\" style=\"background-color: #fff5f5;\"><sup class=\"token-id\">5</sup>!</span>",
+  "token_count": 5
 }
 ```
 
@@ -69,12 +83,23 @@ GET /api/tokenized?text={text}&mode={mode}
 
 **Basic usage:**
 ```bash
-curl "http://localhost:5000/api/tokenized?text=Hello%20World&mode=Qwen3"
+curl -X POST http://localhost:5000/api/tokenized \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Hello World", "mode": "Qwen3"}'
 ```
 
 **With Chinese text:**
 ```bash
-curl "http://localhost:5000/api/tokenized?text=你好，世界！&mode=deepseek_v3.1"
+curl -X POST http://localhost:5000/api/tokenized \
+  -H "Content-Type: application/json" \
+  -d '{"text": "你好，世界！", "mode": "deepseek_v3.1"}'
+```
+
+**With long text:**
+```bash
+curl -X POST http://localhost:5000/api/tokenized \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This is a very long text that would exceed URL length limits in GET requests...", "mode": "Qwen3"}'
 ```
 
 ### 3. API Information
@@ -90,10 +115,10 @@ GET /api
 ```json
 {
   "name": "Color Tokenize API",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "endpoints": {
     "/api/modes": "GET - List available tokenization modes",
-    "/api/tokenized": "GET - Get colored HTML tokens for text"
+    "/api/tokenized": "POST - Get colored HTML tokens for text"
   }
 }
 ```
@@ -130,13 +155,14 @@ modes = response.json()['modes']
 print(f"Available modes: {modes}")
 
 # Tokenize text
-params = {
+data = {
     'text': 'Hello, how are you?',
     'mode': modes[0]
 }
-response = requests.get('http://localhost:5000/api/tokenized', params=params)
+response = requests.post('http://localhost:5000/api/tokenized', json=data)
 result = response.json()
 print(result['html'])
+print(f"Token count: {result['token_count']}")
 ```
 
 ### JavaScript
@@ -148,16 +174,23 @@ fetch('http://localhost:5000/api/modes')
     console.log('Available modes:', data.modes);
     
     // Tokenize text
-    const params = new URLSearchParams({
+    const requestData = {
       text: 'Hello, how are you?',
       mode: data.modes[0]
-    });
+    };
     
-    return fetch(`/api/tokenized?${params}`);
+    return fetch('/api/tokenized', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData)
+    });
   })
   .then(response => response.json())
   .then(data => {
     console.log('HTML:', data.html);
+    console.log('Token count:', data.token_count);
     document.getElementById('output').innerHTML = data.html;
   });
 ```
@@ -175,6 +208,11 @@ python app.py
 ```
 
 3. The API will be available at `http://localhost:5000`
+
+## Version History
+
+- **v1.1.0**: Changed `/api/tokenized` from GET to POST method for long text support, added token count to response
+- **v1.0.0**: Initial release with GET method only
 
 ## Dependencies
 

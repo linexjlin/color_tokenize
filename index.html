@@ -183,7 +183,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://142.171.67.239:5000';
+        const API_BASE = '';
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
@@ -257,12 +257,16 @@
             document.getElementById('tokenizeBtn').disabled = true;
             
             try {
-                const params = new URLSearchParams({
-                    text: text,
-                    mode: mode
+                const response = await fetch(`${API_BASE}/api/tokenized`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        mode: mode
+                    })
                 });
-                
-                const response = await fetch(`${API_BASE}/api/tokenized?${params}`);
                 const data = await response.json();
                 
                 if (!response.ok) {

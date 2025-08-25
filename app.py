@@ -82,12 +82,18 @@ def get_modes():
             "error": str(e)
         }), 500
 
-@app.route('/api/tokenized', methods=['GET'])
+@app.route('/api/tokenized', methods=['POST'])
 def get_tokenized():
     """Get colored HTML representation of text"""
     try:
-        text = request.args.get('text', '')
-        mode = request.args.get('mode', '')
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                "error": "Missing JSON body"
+            }), 400
+            
+        text = data.get('text', '')
+        mode = data.get('mode', '')
         
         if not text:
             return jsonify({
@@ -124,10 +130,10 @@ def api_info():
     """API information endpoint"""
     return jsonify({
         "name": "Color Tokenize API",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "endpoints": {
             "/api/modes": "GET - List available tokenization modes",
-            "/api/tokenized": "GET - Get colored HTML tokens for text"
+            "/api/tokenized": "POST - Get colored HTML tokens for text"
         }
     })
 
